@@ -9,7 +9,7 @@ def dendrogram(axes, x, *args, **kwargs):
 
 
 # An idea of what we should have, with manual plotting.
-x = [[[0, 1], [2, 3]], [[4, 5], [6, 7]]]
+x = [[[[0, 1], [2, 3]], [[4, 5], [6, 7]]], [8, 9]]
 height = 2
 leaves = 4
 
@@ -37,10 +37,10 @@ ax.autoscale_view()
 markers = []
 verts = []
 depth = 0
+labels = []
 
 
 def compute_(x, depth, height, verts, markers):
-    print "compute", x, height, depth, verts
     for el, level in enumerate(x):
         if type(level) == list:
             try:
