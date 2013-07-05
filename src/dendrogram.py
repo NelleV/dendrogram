@@ -40,21 +40,40 @@ depth = 0
 labels = []
 
 
+class Leaf(object):
+    def __init__(self, x, y=0):
+        self.x = float(x)  # FIXME
+        self.y = y
+
+
+def prepare_(x):
+    """
+    Parcours x, remplace les feuilles par la syntaxe voulue.
+    """
+
+    for el, node in enumerate(x):
+        if type(node) == list:
+            x[el] = prepare_(node)
+        else:
+            x[el] = Leaf(node)
+
+    return x
+
+
+# FIXME prototype is starting to get messy...
 def compute_(x, depth, height, verts, markers):
     for el, level in enumerate(x):
         if type(level) == list:
             try:
                 i, j = level
-                if type(i) != list and type(j) != list:
-                    markers += [(i, height - depth - 1),
-                                (j, depth - height - 1)]
-                    markers += [(i, height - depth),
-                                (j, height - depth - 1)]
-                    verts += [((i, height - depth), (i, height - depth - 1)),
-                              ((j, height - depth), (j, height - depth - 1)),
-                              ((i, height - depth),
-                               (j, height - depth))]
-                    x[el] = float(i + j) / 2
+                if type(i) == Leaf and type(j) == Leaf:
+                    # FIXME ? If i.y and j.Y are not the same, should take the
+                    # biggest.
+                    verts += [((i.x, i.y), (i.x, max(i.y, j.y) + 1)),
+                              ((j.x, j.y), (j.x, max(j.y, i.y) + 1)),
+                              ((i.x, max(i.y, j.y) + 1),
+                               (j.x, max(i.y, j.y) + 1))]
+                    x[el] = Leaf(float(i.x + j.x) / 2., y=max(j.y, i.y) + 1)
                 else:
                     x[el] = compute_(level, depth + 1, height, verts, markers)
 
@@ -62,25 +81,24 @@ def compute_(x, depth, height, verts, markers):
                 print "Not a binary tree"
                 raise ValueError
         else:
-            markers += [(level, depth)]
+            markers += [(level.x, level.y)]
             markers += [(level, height - depth)]
 
     return x
 
 
 depth = 0
+x = prepare_(x)
 while type(x) == list:
     compute_(x, depth + 1, height, verts, markers)
     try:
         i, j = x
-        if type(i) != list and type(j) != list:
-            markers += [(i, height - 1),
-                        (j, height - 1)]
-            verts += [((i, height - 1), (i, height)),
-                      ((j, height - 1), (j, height)),
-                      ((i, height),
-                       (j, height))]
-            x = float(i + j) / 2
+        if type(i) == Leaf and type(j) == Leaf:
+            verts += [((i.x, i.y), (i.x, max(i.y, j.y) + 1)),
+                      ((j.x, j.y), (j.x, max(j.y, i.y) + 1)),
+                      ((i.x, max(j.y, i.y) + 1),
+                       (j.x, max(j.y, i.y) + 1))]
+            x = float(i.x + j.x) / 2
     except ValueError:
         pass
 
