@@ -41,23 +41,24 @@ labels = []
 
 
 class Leaf(object):
-    def __init__(self, x, y=0):
+    def __init__(self, x, y=0, label=None):
         self.x = float(x)  # FIXME
         self.y = y
+        self.label = label
 
 
-def prepare_(x):
+def prepare_(x, count=0):
     """
     Parcours x, remplace les feuilles par la syntaxe voulue.
     """
-
     for el, node in enumerate(x):
         if type(node) == list:
-            x[el] = prepare_(node)
+            x[el], count = prepare_(node, count)
         else:
-            x[el] = Leaf(node)
+            x[el] = Leaf(x=count, label=node)
+            count += 1
 
-    return x
+    return x, count
 
 
 # FIXME prototype is starting to get messy...
@@ -67,8 +68,6 @@ def compute_(x, depth, height, verts, markers):
             try:
                 i, j = level
                 if type(i) == Leaf and type(j) == Leaf:
-                    # FIXME ? If i.y and j.Y are not the same, should take the
-                    # biggest.
                     verts += [((i.x, i.y), (i.x, max(i.y, j.y) + 1)),
                               ((j.x, j.y), (j.x, max(j.y, i.y) + 1)),
                               ((i.x, max(i.y, j.y) + 1),
@@ -86,9 +85,8 @@ def compute_(x, depth, height, verts, markers):
 
     return x
 
-
 depth = 0
-x = prepare_(x)
+x, _ = prepare_(x)
 while type(x) == list:
     compute_(x, depth + 1, height, verts, markers)
     try:
@@ -102,7 +100,7 @@ while type(x) == list:
     except ValueError:
         pass
 
-
+# FIXME will not work with polar plots.
 fig, ax = plt.subplots()
 coll = collections.LineCollection(verts, colors='#000000', linewidth=2)
 ax.add_collection(coll)
