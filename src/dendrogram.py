@@ -7,6 +7,7 @@ def dendrogram(axes, x, *args, **kwargs):
     Plots a dendrogram
     """
 
+
 class Leaf(object):
     def __init__(self, x, y=0, label=None):
         self.x = float(x)  # FIXME
@@ -83,10 +84,7 @@ ax.autoscale_view()
 # Now let's try to build the vertexes automatically, by going through the tree
 markers = []
 verts = []
-depth = 0
 labels = []
-
-
 
 
 depth = 0
