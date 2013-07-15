@@ -55,7 +55,7 @@ def compute_(x, depth, height, verts, markers):
 
     return x
 
-
+## Examples
 # An idea of what we should have, with manual plotting.
 x = [[[[0, 1], [2, 3]], [[4, 5], [6, 7]]], [8, 9]]
 height = 2
@@ -65,20 +65,10 @@ level_1 = [0, 1, 2, 3]
 level_2 = [0.5, 2.5]
 level_3 = [1.5]
 
-verts = [[(i, 0), (i, 1)] for i in level_1]
-verts += [[[i, 1], [i, 2]] for i in level_2]
-verts += [[[i, 2], [i, 3]] for i in level_3]
-verts += [((0, 1), (1, 1)), ((2, 1), (3, 1))]
 min_x = -0.5
 max_x = leaves + 0.5
 min_y = -0
 max_y = height + 0.5
-
-fig, ax = plt.subplots()
-coll = collections.LineCollection(verts, colors='#000000', linewidth=2)
-ax.add_collection(coll)
-ax.update_datalim(((min_x, min_y), (max_x, max_y)))
-ax.autoscale_view()
 
 
 # Now let's try to build the vertexes automatically, by going through the tree
