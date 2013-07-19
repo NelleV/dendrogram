@@ -22,7 +22,9 @@ def dendrogram(x, n_leaves=None, linkage=True, *args, **kwargs):
     if linkage:
         x = _prepare_linkage(x, n_leaves)
 
+    import pdb; pdb.set_trace()
     x, _ = _prepare_list(x)
+    order = get_order(x)
 
     height = 0
     while cbook.iterable(x):
@@ -42,7 +44,23 @@ def dendrogram(x, n_leaves=None, linkage=True, *args, **kwargs):
         verts, colors='#000000', linewidth=2)
     axes.add_collection(line_coll)
     axes.autoscale_view()
-    return axes
+    return axes, order
+
+
+def get_order(tree):
+    """
+    Get the order of the labels of the tree.
+    """
+    if not cbook.iterable(tree):
+        return [tree.label]
+
+    order = []
+    for node in tree:
+        if type(node) != Leaf:
+            order += get_order(node)
+        else:
+            order += [node.label]
+    return order
 
 
 class Leaf(object):
@@ -115,4 +133,4 @@ if __name__ == "__main__":
     X = np.random.randn(n_leaves, 3)
 
     children = hierarchy.linkage(X)[:, :2].astype(int)
-    dendrogram(children, n_leaves)
+    ax, order = dendrogram(children, n_leaves)
