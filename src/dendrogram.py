@@ -2,7 +2,7 @@ from matplotlib import collections
 from matplotlib import pyplot as plt
 
 
-def dendrogram(x, *args, **kwargs):
+def dendrogram(x, linkage=True, *args, **kwargs):
     """
     Plots a dendrogram
     """
@@ -12,10 +12,12 @@ def dendrogram(x, *args, **kwargs):
     # tree
     markers = []
     verts = []
-    labels = []
 
     depth = 0
-    x, _ = prepare_(x)
+    if linkage:
+        x, _ = _prepare_linkage(x)
+    else:
+        x, _ = _prepare_list(x)
     height = 0
     while type(x) == list:
         compute_(x, depth + 1, height, verts, markers)
@@ -35,6 +37,7 @@ def dendrogram(x, *args, **kwargs):
     axes.autoscale_view()
     return axes
 
+
 class Leaf(object):
     def __init__(self, x, y=0, label=None):
         self.x = float(x)  # FIXME
@@ -42,13 +45,27 @@ class Leaf(object):
         self.label = label
 
 
-def prepare_(x, count=0):
+def _prepare_linkage(children, i, n_leaves):
+    x, y = children[i]
+    if x > n_leaves:
+        a, _ = _prepare_linkage(children, x - n_leaves, n_leaves)
+    else:
+        a = Leaf(x=x, label=str(x))
+    if y > n_leaves:
+        b, _ = _prepare_linkage(children, y - n_leaves, n_leaves)
+    else:
+        b = Leaf(y, label=str(y))
+
+    return [a, b], None
+
+
+def _prepare_list(x, count=0):
     """
     Parcours x, remplace les feuilles par la syntaxe voulue.
     """
     for el, node in enumerate(x):
         if type(node) == list:
-            x[el], count = prepare_(node, count)
+            x[el], count = _prepare_list(node, count)
         else:
             x[el] = Leaf(x=count, label=node)
             count += 1
@@ -82,6 +99,7 @@ def compute_(x, depth, height, verts, markers):
 
     return x
 
+
 if __name__ == "__main__":
     ## Examples
     # An idea of what we should have, with manual plotting.
@@ -98,4 +116,3 @@ if __name__ == "__main__":
     max_x = leaves + 0.5
     min_y = -0
     max_y = height + 0.5
-
