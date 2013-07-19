@@ -1,12 +1,39 @@
-from matplotlib import pyplot as plt
 from matplotlib import collections
+from matplotlib import pyplot as plt
 
 
-def dendrogram(axes, x, *args, **kwargs):
+def dendrogram(x, *args, **kwargs):
     """
     Plots a dendrogram
     """
+    fig, axes = plt.subplots()
 
+    # Now let's try to build the vertexes automatically, by going through the
+    # tree
+    markers = []
+    verts = []
+    labels = []
+
+    depth = 0
+    x, _ = prepare_(x)
+    height = 0
+    while type(x) == list:
+        compute_(x, depth + 1, height, verts, markers)
+        try:
+            i, j = x
+            if type(i) == Leaf and type(j) == Leaf:
+                verts += [((i.x, i.y), (i.x, max(i.y, j.y) + 1)),
+                          ((j.x, j.y), (j.x, max(j.y, i.y) + 1)),
+                          ((i.x, max(j.y, i.y) + 1),
+                           (j.x, max(j.y, i.y) + 1))]
+                x = float(i.x + j.x) / 2
+        except ValueError:
+            pass
+
+    line_coll = collections.LineCollection(verts, colors='#000000', linewidth=2)
+    axes.add_collection(line_coll)
+    axes.autoscale_view()
+    return axes
 
 class Leaf(object):
     def __init__(self, x, y=0, label=None):
@@ -55,46 +82,20 @@ def compute_(x, depth, height, verts, markers):
 
     return x
 
-## Examples
-# An idea of what we should have, with manual plotting.
-x = [[[[0, 1], [2, 3]], [[4, 5], [6, 7]]], [8, 9]]
-height = 2
-leaves = 4
+if __name__ == "__main__":
+    ## Examples
+    # An idea of what we should have, with manual plotting.
+    x = [[[[0, 1], [2, 3]], [[4, 5], [6, 7]]], [8, 9]]
+    height = 4
+    leaves = 4
 
-level_1 = [0, 1, 2, 3]
-level_2 = [0.5, 2.5]
-level_3 = [1.5]
+    level_1 = [0, 1, 2, 3]
+    level_2 = [0.5, 2.5]
+    level_3 = [1.5]
 
-min_x = -0.5
-max_x = leaves + 0.5
-min_y = -0
-max_y = height + 0.5
+    # FIXME should be computed when reading the binary tree
+    min_x = -0.5
+    max_x = leaves + 0.5
+    min_y = -0
+    max_y = height + 0.5
 
-
-# Now let's try to build the vertexes automatically, by going through the tree
-markers = []
-verts = []
-labels = []
-
-
-depth = 0
-x, _ = prepare_(x)
-while type(x) == list:
-    compute_(x, depth + 1, height, verts, markers)
-    try:
-        i, j = x
-        if type(i) == Leaf and type(j) == Leaf:
-            verts += [((i.x, i.y), (i.x, max(i.y, j.y) + 1)),
-                      ((j.x, j.y), (j.x, max(j.y, i.y) + 1)),
-                      ((i.x, max(j.y, i.y) + 1),
-                       (j.x, max(j.y, i.y) + 1))]
-            x = float(i.x + j.x) / 2
-    except ValueError:
-        pass
-
-# FIXME will not work with polar plots.
-fig, ax = plt.subplots()
-line_coll = collections.LineCollection(verts, colors='#000000', linewidth=2)
-ax.add_collection(line_coll)
-ax.update_datalim(((min_x, min_y), (max_x, max_y)))
-ax.autoscale_view()
