@@ -1,4 +1,4 @@
-from matplotlib import collections
+from matplotlib import collections as mcoll
 from matplotlib import pyplot as plt
 
 from matplotlib import cbook
@@ -18,15 +18,14 @@ def dendrogram(x, n_leaves=None, linkage=True, *args, **kwargs):
     markers = []
     verts = []
 
-    depth = 0
     if linkage:
         x = _prepare_linkage(x, n_leaves)
 
-    import pdb; pdb.set_trace()
     x, _ = _prepare_list(x)
-    order = get_order(x)
+    order = _flatten_tree(x)
 
     height = 0
+    depth = 0
     while cbook.iterable(x):
         compute_(x, depth + 1, height, verts, markers)
         try:
@@ -40,16 +39,29 @@ def dendrogram(x, n_leaves=None, linkage=True, *args, **kwargs):
         except ValueError:
             pass
 
-    line_coll = collections.LineCollection(
+    markers = np.array(markers)
+    lines_coll = mcoll.LineCollection(
         verts, colors='#000000', linewidth=2)
-    axes.add_collection(line_coll)
+    axes.add_collection(lines_coll)
+    axes.scatter(markers[:, 0],
+                 markers[:, 1])
     axes.autoscale_view()
     return axes, order
 
 
-def get_order(tree):
+def _flatten_tree(tree):
     """
     Get the order of the labels of the tree.
+
+    Parameters
+    ----------
+    tree : tree-like structure
+        iterable of iterable. Leaves should be of type Leaf
+
+    Returns
+    -------
+    order : sequence of integers
+        order of the leafs.
     """
     if not cbook.iterable(tree):
         return [tree.label]
@@ -57,7 +69,7 @@ def get_order(tree):
     order = []
     for node in tree:
         if type(node) != Leaf:
-            order += get_order(node)
+            order += _flatten_tree(node)
         else:
             order += [node.label]
     return order
@@ -120,7 +132,6 @@ def compute_(x, depth, height, verts, markers):
                 raise ValueError
         else:
             markers += [(level.x, level.y)]
-            markers += [(level, height - depth)]
 
     return x
 
