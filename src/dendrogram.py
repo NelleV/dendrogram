@@ -1,11 +1,16 @@
 from matplotlib import collections
 from matplotlib import pyplot as plt
 
+from matplotlib import cbook
 
-def dendrogram(x, linkage=True, *args, **kwargs):
+
+def dendrogram(x, n_leaves=None, linkage=True, *args, **kwargs):
     """
     Plots a dendrogram
     """
+    if linkage and n_leaves is None:
+        raise ValueError("When providing a linkage matrix, you also need to "
+                         "specify the number of leaves.")
     fig, axes = plt.subplots()
 
     # Now let's try to build the vertexes automatically, by going through the
@@ -15,11 +20,12 @@ def dendrogram(x, linkage=True, *args, **kwargs):
 
     depth = 0
     if linkage:
-        x, _ = _prepare_linkage(x)
-    else:
-        x, _ = _prepare_list(x)
+        x = _prepare_linkage(x, n_leaves)
+
+    x, _ = _prepare_list(x)
+
     height = 0
-    while type(x) == list:
+    while cbook.iterable(x):
         compute_(x, depth + 1, height, verts, markers)
         try:
             i, j = x
@@ -32,7 +38,8 @@ def dendrogram(x, linkage=True, *args, **kwargs):
         except ValueError:
             pass
 
-    line_coll = collections.LineCollection(verts, colors='#000000', linewidth=2)
+    line_coll = collections.LineCollection(
+        verts, colors='#000000', linewidth=2)
     axes.add_collection(line_coll)
     axes.autoscale_view()
     return axes
@@ -45,18 +52,18 @@ class Leaf(object):
         self.label = label
 
 
-def _prepare_linkage(children, i, n_leaves):
+def _prepare_linkage(children, n_leaves, i=-1):
     x, y = children[i]
     if x > n_leaves:
-        a, _ = _prepare_linkage(children, x - n_leaves, n_leaves)
+        a = _prepare_linkage(children, n_leaves, x - n_leaves)
     else:
-        a = Leaf(x=x, label=str(x))
+        a = x
     if y > n_leaves:
-        b, _ = _prepare_linkage(children, y - n_leaves, n_leaves)
+        b = _prepare_linkage(children, n_leaves, y - n_leaves)
     else:
-        b = Leaf(y, label=str(y))
+        b = y
 
-    return [a, b], None
+    return [a, b]
 
 
 def _prepare_list(x, count=0):
@@ -76,7 +83,7 @@ def _prepare_list(x, count=0):
 # FIXME prototype is starting to get messy...
 def compute_(x, depth, height, verts, markers):
     for el, level in enumerate(x):
-        if type(level) == list:
+        if cbook.iterable(level):
             try:
                 i, j = level
                 if type(i) == Leaf and type(j) == Leaf:
@@ -101,18 +108,11 @@ def compute_(x, depth, height, verts, markers):
 
 
 if __name__ == "__main__":
-    ## Examples
-    # An idea of what we should have, with manual plotting.
-    x = [[[[0, 1], [2, 3]], [[4, 5], [6, 7]]], [8, 9]]
-    height = 4
-    leaves = 4
+    import numpy as np
+    from scipy.cluster import hierarchy
 
-    level_1 = [0, 1, 2, 3]
-    level_2 = [0.5, 2.5]
-    level_3 = [1.5]
+    n_leaves = 50
+    X = np.random.randn(n_leaves, 3)
 
-    # FIXME should be computed when reading the binary tree
-    min_x = -0.5
-    max_x = leaves + 0.5
-    min_y = -0
-    max_y = height + 0.5
+    children = hierarchy.linkage(X)[:, :2].astype(int)
+    dendrogram(children, n_leaves)
